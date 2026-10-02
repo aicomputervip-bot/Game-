@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#dff2f8" />
+    <meta name="description" content="One clear clock for your alarms, reminders, world time and calendar." />
+    <title>Daymark — time, in your rhythm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { skyglass: "#dff2f8", deepsea: "#203b49" } } } };</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#home" aria-label="Daymark home">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>daymark</span>
+        </a>
+        <button class="format-toggle" id="format-toggle" type="button" aria-label="Switch to 24-hour time">12H <span class="toggle-track"><span></span></span> 24H</button>
+      </header>
+
+      <main id="home">
+        <section class="hero" aria-label="Local time">
+          <div class="local-clock" aria-label="Current local time">
+            <canvas id="analog-clock" width="240" height="240" role="img" aria-label="Analog clock"></canvas>
+            <div class="digital-wrap">
+              <time class="digital-time" id="local-time">--:--<span>:--</span></time>
+              <span class="local-zone" id="local-zone">LOCAL TIME</span>
+            </div>
+          </div>
+        </section>
+
+        <nav class="tool-nav grid grid-cols-4 items-center gap-2" role="tablist" aria-label="Clock tools">
+          <button class="tool-tab active flex items-center gap-2" id="alarm-tab" type="button" role="tab" aria-selected="true" aria-controls="alarm-view" data-view="alarm-view"><span class="tab-icon" aria-hidden="true">◷</span>Alarm</button>
+          <button class="tool-tab flex items-center gap-2" id="reminder-tab" type="button" role="tab" aria-selected="false" aria-controls="reminder-view" data-view="reminder-view" tabindex="-1"><span class="tab-icon" aria-hidden="true">✳</span>Reminder</button>
+          <button class="tool-tab flex items-center gap-2" id="world-tab" type="button" role="tab" aria-selected="false" aria-controls="world-view" data-view="world-view" tabindex="-1"><span class="tab-icon" aria-hidden="true">↗</span>World time</button>
+          <button class="tool-tab flex items-center gap-2" id="calendar-tab" type="button" role="tab" aria-selected="false" aria-controls="calendar-view" data-view="calendar-view" tabindex="-1"><span class="tab-icon" aria-hidden="true">▦</span>Calendar</button>
+        </nav>
+
+        <div class="dashboard-grid" id="tool-views">
+          <section class="panel alarm-panel tool-view" id="alarm-view" role="tabpanel" aria-labelledby="alarm-tab">
+            <div class="section-heading">
+              <div><p class="eyebrow">MAKE SPACE FOR WHAT MATTERS</p><h2 id="alarm-title">Alarms</h2></div>
+              <span class="section-icon alarm-icon" aria-hidden="true">◷</span>
+            </div>
+            <form class="alarm-form" id="alarm-form">
+              <label class="visually-hidden" for="alarm-time">Alarm time</label>
+              <input id="alarm-time" type="time" required aria-label="Alarm time" />
+              <label class="visually-hidden" for="alarm-label">Alarm label</label>
+              <input id="alarm-label" type="text" maxlength="32" placeholder="Add a label" aria-label="Alarm label" />
+              <button type="submit" class="add-alarm-button" aria-label="Set alarm">+</button>
+            </form>
+            <div class="alarm-list" id="alarm-list" aria-live="polite"></div>
+            <p class="panel-footnote">Alarms ring while this page is open.</p>
+          </section>
+
+          <section class="panel break-panel tool-view" id="reminder-view" role="tabpanel" aria-labelledby="reminder-tab" hidden>
+            <div class="break-feature">
+              <div class="break-art" aria-hidden="true"><span class="sun-disc"></span><span class="art-line art-line-one"></span><span class="art-line art-line-two"></span><span class="art-spark">✳</span></div>
+              <div class="break-content">
+                <p class="eyebrow">A KIND REMINDER</p>
+                <h2 id="break-title">Unfold from<br /><em>your chair.</em></h2>
+                <p class="break-description">A short stretch can make the next hour feel different.</p>
+                <div class="reminder-controls">
+                  <label for="reminder-interval">Remind me every</label>
+                  <select id="reminder-interval" aria-label="Reminder interval">
+                    <option value="20">20 minutes</option>
+                    <option value="30" selected>30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60">60 minutes</option>
+                  </select>
+                </div>
+                <div class="reminder-actions">
+                  <button class="reminder-button" id="reminder-toggle" type="button"><span class="button-symbol" aria-hidden="true">▶</span><span id="reminder-button-label">Start reminder</span></button>
+                  <span class="reminder-countdown" id="reminder-countdown" aria-live="polite">PAUSED</span>
+                </div>
+              </div>
+            </div>
+            <div class="scheduled-reminder-area">
+              <div class="scheduled-reminder-heading">
+                <p class="eyebrow">ONE-TIME REMINDER</p>
+                <h3>Choose a moment</h3>
+              </div>
+              <form class="scheduled-reminder-form" id="scheduled-reminder-form">
+                <label class="visually-hidden" for="scheduled-reminder-time">Reminder date and time</label>
+                <input id="scheduled-reminder-time" type="datetime-local" required aria-label="Reminder date and time" />
+                <label class="visually-hidden" for="scheduled-reminder-label">Reminder note</label>
+                <input id="scheduled-reminder-label" type="text" maxlength="60" placeholder="What should we remind you?" aria-label="Reminder note" />
+                <button class="scheduled-reminder-submit" type="submit">Add reminder</button>
+              </form>
+              <div class="scheduled-reminders" id="scheduled-reminders" aria-live="polite"></div>
+            </div>
+          </section>
+
+          <section class="panel world-panel tool-view" id="world-view" aria-labelledby="world-title" role="tabpanel" hidden>
+            <div class="section-heading">
+              <div><p class="eyebrow">A FEW PLACES, A FEW HOURS</p><h2 id="world-title">Around the world</h2></div>
+              <span class="section-icon" aria-hidden="true">↗</span>
+            </div>
+            <div class="world-list" id="world-list" aria-live="polite"></div>
+            <form class="add-city-form" id="city-form">
+              <div class="city-search-control">
+                <label class="visually-hidden" for="city-search">Search world cities or countries</label>
+                <input id="city-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-search-results" placeholder="Search a city or country" autocomplete="off" />
+                <button class="add-city-button" type="submit" aria-label="Add first search result">+</button>
+                <div class="city-search-results" id="city-search-results" role="listbox" hidden></div>
+              </div>
+              <p class="city-search-hint" id="city-search-hint">Search by city, time zone, or country.</p>
+            </form>
+          </section>
+
+          <section class="panel calendar-panel tool-view" id="calendar-view" aria-labelledby="calendar-title" role="tabpanel" hidden>
+            <div class="section-heading calendar-topline">
+              <div><p class="eyebrow">A LITTLE ROOM TO PLAN</p><h2 id="calendar-title">Your calendar</h2></div>
+              <div class="month-switch flex items-center gap-2">
+                <button class="month-button" id="calendar-prev" type="button" aria-label="Previous month">‹</button>
+                <time id="calendar-month-label"></time>
+                <button class="month-button" id="calendar-next" type="button" aria-label="Next month">›</button>
+              </div>
+            </div>
+            <div class="calendar-layout grid gap-6">
+              <div class="calendar-board">
+                <div class="calendar-weekdays" aria-hidden="true"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div>
+                <div class="calendar-grid" id="calendar-grid" role="group" aria-label="Calendar dates"></div>
+              </div>
+              <aside class="day-agenda" aria-labelledby="selected-date-title">
+                <p class="eyebrow">YOUR DAY</p>
+                <h3 id="selected-date-title"></h3>
+                <div class="event-list" id="calendar-events" aria-live="polite"></div>
+                <form class="event-form" id="calendar-event-form">
+                  <label class="visually-hidden" for="calendar-event-input">Add a note to this day</label>
+                  <input id="calendar-event-input" type="text" maxlength="80" placeholder="Add a note or plan" required />
+                  <button type="submit" aria-label="Add plan">+</button>
+                </form>
+              </aside>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="reminder-dialog" id="reminder-dialog" aria-labelledby="dialog-title">
+      <button class="dialog-close" id="dialog-close" type="button" aria-label="Dismiss reminder">×</button>
+      <span class="dialog-mark" aria-hidden="true">✳</span>
+      <p class="eyebrow">A MOMENT FOR YOU</p>
+      <h2 id="dialog-title">Time to<br /><em>stretch a little.</em></h2>
+      <p>Stand up, take a breath, and give your eyes a rest.</p>
+      <button class="reminder-button dialog-done" id="dialog-done" type="button">I'm moving</button>
+      <button class="snooze-button" id="dialog-snooze" type="button">Remind me in 5 minutes</button>
+    </dialog>
+    <div class="alarm-toast" id="alarm-toast" role="alert" aria-live="assertive" hidden>
+      <span class="toast-symbol" aria-hidden="true">◷</span><span id="alarm-toast-label">Alarm</span><button id="alarm-dismiss" type="button">Dismiss</button>
+    </div>
+    <div class="reminder-toast" id="scheduled-reminder-toast" role="alert" aria-live="assertive" hidden>
+      <span class="toast-symbol" aria-hidden="true">✳</span><span id="scheduled-reminder-toast-label">Reminder</span><button id="scheduled-reminder-dismiss" type="button">Dismiss</button>
+    </div>
+  </body>
+</html>
